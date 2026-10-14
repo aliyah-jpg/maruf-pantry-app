@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ma'ruf Dallas - Ramadan Operations Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+  </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100">
+
+  <div id="toast" class="fixed top-5 right-5 z-50 hidden p-4 rounded-xl shadow-2xl text-xs font-bold border transition-all"></div>
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xl">
+          <i class="fa-solid fa-moon"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold text-white tracking-tight">MA'RUF DALLAS RAMADAN OPS</h1>
+          <p class="text-xs text-slate-400">Live Team Sync Active</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select id="staff-filter" onchange="renderTasks()" class="bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 px-3 py-2 rounded-xl">
+          <option value="ALL">All Staff Members</option>
+          <option value="Aliyah">Aliyah</option>
+          <option value="Muntaha">Muntaha</option>
+          <option value="Mahek">Mahek</option>
+          <option value="Fuad">Fuad</option>
+        </select>
+        <button onclick="openModal()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg">
+          + New Task
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+
+    <!-- Analytics Charts Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="glass-card p-5 rounded-2xl border border-slate-800">
+        <h3 class="text-xs font-bold text-slate-300 uppercase mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-emerald-400"></i> Phase Task Distribution
+        </h3>
+        <div class="h-48 relative flex justify-center">
+          <canvas id="phaseChart"></canvas>
+        </div>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl border border-slate-800">
+        <h3 class="text-xs font-bold text-slate-300 uppercase mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-chart-column text-amber-400"></i> Operational Progress Status
+        </h3>
+        <div class="h-48 relative flex justify-center">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Task Grid -->
+    <div class="space-y-4">
+      <h2 class="text-sm font-bold text-slate-300"><i class="fa-solid fa-list-check text-emerald-400"></i> Live Task Tracker</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="tasks-container"></div>
+    </div>
+  </main>
+
+  <!-- Create Task Modal -->
+  <div id="modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card rounded-3xl max-w-lg w-full p-6 space-y-4 border border-slate-700">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-base text-white">Add Ramadan Process Task</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1">Process Phase</label>
+          <select id="inp-phase" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200">
+            <option value="Tabling & Outreach">Tabling & Outreach</option>
+            <option value="Collaborations & Partners">Collaborations & Partners</option>
+            <option value="Distributions & Inventory">Distributions & Inventory</option>
+            <option value="Dinners & Events">Dinners & Events</option>
+            <option value="Marketing & Communications">Marketing & Communications</option>
+            <option value="Volunteers">Volunteers</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1">Task Title</label>
+          <input type="text" id="inp-title" placeholder="e.g. Set up Goodie Bag Drive" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1">Details</label>
+          <textarea id="inp-desc" rows="3" placeholder="Task requirements..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-400 mb-1">Assigned Staff</label>
+            <select id="inp-assignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200">
+              <option value="Aliyah">Aliyah</option>
+              <option value="Muntaha">Muntaha</option>
+              <option value="Mahek">Mahek</option>
+              <option value="Fuad">Fuad</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-400 mb-1">Target Deadline</label>
+            <input type="date" id="inp-deadline" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200">
+          </div>
+        </div>
+      </div>
+
+      <button onclick="submitTask()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg">
+        Submit & Sync Live
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let tasksData = [];
+    let phaseChart = null;
+    let statusChart = null;
+
+    window.onload = function() {
+      initCharts();
+      fetchTasks();
+      // Auto-poll every 3 seconds so all staff see updates live
+      setInterval(fetchTasks, 3000);
+    };
+
+    function initCharts() {
+      const pCtx = document.getElementById('phaseChart').getContext('2d');
+      phaseChart = new Chart(pCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Tabling', 'Collab', 'Distributions', 'Dinners', 'Marketing', 'Volunteers'],
+          datasets: [{ data: [0,0,0,0,0,0], backgroundColor: ['#10b981', '#a855f7', '#3b82f6', '#f59e0b', '#f43f5e', '#06b6d4'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } } }
+      });
+
+      const sCtx = document.getElementById('statusChart').getContext('2d');
+      statusChart = new Chart(sCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Pending', 'In Progress', 'Completed'],
+          datasets: [{ label: 'Tasks', data: [0,0,0], backgroundColor: ['#64748b', '#f59e0b', '#10b981'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
+      });
+    }
+
+    function fetchTasks() {
+      fetch('/api/tasks')
+        .then(r => r.json())
+        .then(d => {
+          if (d.status === 'SUCCESS') {
+            tasksData = d.tasks;
+            renderTasks();
+            updateCharts();
+          }
+        });
+    }
+
+    function updateCharts() {
+      const phases = ['Tabling & Outreach', 'Collaborations & Partners', 'Distributions & Inventory', 'Dinners & Events', 'Marketing & Communications', 'Volunteers'];
+      const phaseCounts = phases.map(p => tasksData.filter(t => t.phase === p).length);
+      phaseChart.data.datasets[0].data = phaseCounts;
+      phaseChart.update();
+
+      const statuses = ['Pending', 'In Progress', 'Completed'];
+      const statusCounts
