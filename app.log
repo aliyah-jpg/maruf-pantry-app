@@ -1,0 +1,5 @@
+nohup: ignoring input
+  File "/home/aliyah/maruf-pantry-app/app.py", line 1
+    cat << 'EOF' > ~/maruf-pantry-app/app.py
+                    ^
+SyntaxError: invalid syntax

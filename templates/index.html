@@ -1,185 +1,956 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="theme-dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ma'ruf Dallas - Ramadan Operations Hub</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ma'ruf Dallas Ops Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .theme-dark {
+            --bg-main: #063244;
+            --bg-surface: #042431;
+            --bg-card: #083c52;
+            --text-main: #f3e6d1;
+            --text-muted: #cbd5e1;
+            --border-color: #0b4a64;
+            --maruf-blue: #267796;
+            --maruf-gold: #b87704;
+        }
+
+        .theme-light {
+            --bg-main: #f3e6d1;
+            --bg-surface: #fbf7f0;
+            --bg-card: #ffffff;
+            --text-main: #063244;
+            --text-muted: #475569;
+            --border-color: #d1c1a5;
+            --maruf-blue: #267796;
+            --maruf-gold: #b87704;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .bg-surface { background-color: var(--bg-surface); }
+        .bg-card { background-color: var(--bg-card); }
+        .border-theme { border-color: var(--border-color); }
+        .text-theme { color: var(--text-main); }
+        .text-muted { color: var(--text-muted); }
+
+        .bg-maruf-blue { background-color: #267796; }
+        .bg-maruf-gold { background-color: #b87704; }
+        .text-maruf-gold { color: #b87704; }
+        .text-maruf-blue { color: #267796; }
+
+        .modal-backdrop { background-color: rgba(4, 36, 49, 0.85); backdrop-filter: blur(2px); }
+        .suggestions-dropdown {
+            max-height: 220px;
+            overflow-y: auto;
+            position: absolute;
+            z-index: 70;
+            width: 100%;
+            top: 100%;
+            left: 0;
+        }
+    </style>
 </head>
-<body class="h-full flex flex-col bg-slate-950 text-slate-100">
+<body class="min-h-screen flex flex-col">
 
-  <div id="toast" class="fixed top-5 right-5 z-50 hidden p-4 rounded-xl shadow-2xl text-xs font-bold border transition-all"></div>
+    <!-- Header -->
+    <header class="bg-surface border-b border-theme sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between min-h-[96px] py-2">
+                <div class="flex items-center space-x-4">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Ma'ruf Dallas Logo" class="h-[88px] w-auto object-contain py-1">
+                    <div class="border-l border-theme pl-4">
+                        <div class="flex items-center space-x-2">
+                            <h1 class="text-xl font-bold uppercase tracking-wide text-theme">Ma'ruf Dallas</h1>
+                            <span class="text-xs font-semibold px-2 py-0.5 bg-maruf-blue text-white uppercase">Ops Hub</span>
+                        </div>
+                        <p class="text-xs text-muted mt-0.5">9319 Lyndon B Johnson Fwy Suite 110, Dallas TX</p>
+                    </div>
+                </div>
 
-  <!-- Header -->
-  <header class="border-b border-slate-800 bg-slate-900/80 sticky top-0 z-30">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xl">
-          <i class="fa-solid fa-moon"></i>
+                <div class="flex items-center space-x-4 sm:space-x-6">
+                    <button onclick="toggleTheme()" id="theme-toggle-btn" class="flex items-center space-x-2 px-3 py-2 border border-theme text-xs font-bold uppercase tracking-wider text-theme hover:bg-maruf-blue hover:text-white transition rounded-none">
+                        <i class="fa-solid fa-sun text-maruf-gold" id="theme-icon"></i>
+                        <span id="theme-label">Light Theme</span>
+                    </button>
+
+                    <div class="flex items-center space-x-1 p-1 border border-theme rounded-none">
+                        <button id="btn-ramadan" onclick="switchCampaign('ramadan')" class="flex items-center space-x-2 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wider bg-maruf-blue text-white">
+                            <i class="fa-solid fa-moon text-maruf-gold"></i><span>Ramadan 1448</span>
+                        </button>
+                        <button id="btn-dhulhijjah" onclick="switchCampaign('dhulhijjah')" class="flex items-center space-x-2 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wider text-muted hover:text-theme">
+                            <i class="fa-solid fa-kaaba text-maruf-gold"></i><span>Dhul Hijjah</span>
+                        </button>
+                    </div>
+
+                    <div class="h-8 w-px border-r border-theme hidden sm:block"></div>
+
+                    <button onclick="openModal('entry-modal')" class="bg-maruf-gold hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-none text-xs uppercase tracking-wider flex items-center space-x-2 transition border border-maruf-gold shadow-md">
+                        <i class="fa-solid fa-plus-circle"></i><span>Create Entry</span>
+                    </button>
+                </div>
+            </div>
         </div>
-        <div>
-          <h1 class="text-lg font-extrabold text-white tracking-tight">MA'RUF DALLAS RAMADAN OPS</h1>
-          <p class="text-xs text-slate-400">Live Team Sync Active</p>
-        </div>
-      </div>
+    </header>
 
-      <div class="flex items-center gap-2">
-        <select id="staff-filter" onchange="renderTasks()" class="bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 px-3 py-2 rounded-xl">
-          <option value="ALL">All Staff Members</option>
-          <option value="Aliyah">Aliyah</option>
-          <option value="Muntaha">Muntaha</option>
-          <option value="Mahek">Mahek</option>
-          <option value="Fuad">Fuad</option>
-        </select>
-        <button onclick="openModal()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg">
-          + New Task
-        </button>
-      </div>
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <div class="border-b border-theme">
+            <nav class="flex space-x-1 overflow-x-auto pb-2">
+                <button onclick="setActiveTab('dashboard')" id="tab-dashboard" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-maruf-gold bg-surface border-t-2 border-maruf-gold whitespace-nowrap">
+                    <i class="fa-solid fa-chart-line"></i><span>Main Dashboard</span>
+                </button>
+                <button onclick="setActiveTab('planning')" id="tab-planning" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted hover:text-theme whitespace-nowrap">
+                    <i class="fa-solid fa-clipboard-check"></i><span>Pre-Ramadan Planning</span>
+                </button>
+                <button onclick="setActiveTab('tasks')" id="tab-tasks" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted hover:text-theme whitespace-nowrap">
+                    <i class="fa-solid fa-list-check"></i><span>Staff Tasks</span>
+                </button>
+                <button onclick="setActiveTab('tabling')" id="tab-tabling" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted hover:text-theme whitespace-nowrap">
+                    <i class="fa-solid fa-mosque"></i><span>Tabling & Outreach</span>
+                </button>
+                <button onclick="setActiveTab('distributions')" id="tab-distributions" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted hover:text-theme whitespace-nowrap">
+                    <i class="fa-solid fa-truck-ramp-box"></i><span>Distributions & Inventory</span>
+                </button>
+                <button onclick="setActiveTab('collaborations')" id="tab-collaborations" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted hover:text-theme whitespace-nowrap">
+                    <i class="fa-solid fa-handshake"></i><span>Collaborations & Partners</span>
+                </button>
+                <button onclick="setActiveTab('dinners')" id="tab-dinners" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted hover:text-theme whitespace-nowrap">
+                    <i class="fa-solid fa-utensils"></i><span>Dinners & Events</span>
+                </button>
+                <button onclick="setActiveTab('marketing')" id="tab-marketing" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted hover:text-theme whitespace-nowrap">
+                    <i class="fa-solid fa-bullhorn"></i><span>Marketing Plans</span>
+                </button>
+                <button onclick="setActiveTab('volunteers')" id="tab-volunteers" class="nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted hover:text-theme whitespace-nowrap">
+                    <i class="fa-solid fa-user-gear"></i><span>Volunteers</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Staff Toolbar -->
+        <div id="staff-filter-toolbar" class="bg-surface border border-theme p-4 flex flex-col sm:flex-row items-center justify-between gap-4 hidden">
+            <div>
+                <h3 class="font-bold text-theme text-xs uppercase tracking-wider">Staff Deliverables View</h3>
+                <p class="text-xs text-muted">Filter sub-tasks assigned across staff members</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <label class="text-xs font-bold text-theme uppercase">Filter by Staff Member:</label>
+                <select id="staff-select-filter" onchange="renderUI()" class="bg-card border border-maruf-blue px-3 py-2 text-xs text-theme focus:outline-none">
+                    <option value="ALL">All Staff Members</option>
+                    <option value="Fuad">Fuad</option>
+                    <option value="Aisha">Aisha</option>
+                    <option value="Abdi">Abdi</option>
+                    <option value="Walid">Walid</option>
+                    <option value="Mahek">Mahek</option>
+                    <option value="Muntaha">Muntaha</option>
+                    <option value="AjiFanta">AjiFanta</option>
+                    <option value="Aliyah">Aliyah</option>
+                    <option value="Raheeq">Raheeq</option>
+                    <option value="Marwa">Marwa</option>
+                    <option value="Hikmatullah">Hikmatullah</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="main-display" class="space-y-6"></div>
+
+    </main>
+
+    <!-- Modal: Edit Metrics -->
+    <div id="metrics-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden p-4 modal-backdrop">
+        <div class="bg-surface border border-maruf-gold w-full max-w-md p-6 space-y-4 rounded-none shadow-2xl">
+            <div class="flex justify-between items-center border-b border-theme pb-3">
+                <h3 class="text-sm font-bold text-theme uppercase tracking-wider"><i class="fa-solid fa-sliders text-maruf-gold mr-2"></i>Update Campaign Metrics</h3>
+                <button onclick="closeModal('metrics-modal')" class="text-muted hover:text-theme"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+
+            <form onsubmit="handleMetricsSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Total Funds Raised ($)</label>
+                    <input type="number" id="metric-raised" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Campaign Goal ($)</label>
+                    <input type="number" id="metric-goal" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Food Packages / Boxes</label>
+                    <input type="number" id="metric-food-boxes" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Total Meals Served</label>
+                    <input type="number" id="metric-meals-served" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Active Volunteers Count</label>
+                    <input type="number" id="metric-volunteers" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-theme">
+                    <button type="button" onclick="closeModal('metrics-modal')" class="px-4 py-2 text-muted bg-card border border-theme uppercase font-bold text-xs">Cancel</button>
+                    <button type="submit" class="px-5 py-2 uppercase font-bold text-xs bg-maruf-gold text-white border border-maruf-gold">Save Metrics</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </header>
 
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+    <!-- Modal: Create Entry -->
+    <div id="entry-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden p-4 modal-backdrop">
+        <div class="bg-surface border border-maruf-blue w-full max-w-lg p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-theme pb-3">
+                <h3 class="text-sm font-bold text-theme uppercase tracking-wider"><i class="fa-solid fa-pen-to-square text-maruf-gold mr-2"></i>Create New Activity Entry</h3>
+                <button onclick="closeModal('entry-modal')" class="text-muted hover:text-theme"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
 
-    <!-- Analytics Charts Section -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="glass-card p-5 rounded-2xl border border-slate-800">
-        <h3 class="text-xs font-bold text-slate-300 uppercase mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-chart-pie text-emerald-400"></i> Phase Task Distribution
-        </h3>
-        <div class="h-48 relative flex justify-center">
-          <canvas id="phaseChart"></canvas>
+            <form onsubmit="handleEntrySubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Operational Section</label>
+                    <select id="entry-section" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                        <option value="tabling">Tabling & Outreach</option>
+                        <option value="distributions">Distributions & Inventory</option>
+                        <option value="collaborations">Collaborations & Partners</option>
+                        <option value="dinners">Dinners & Events</option>
+                        <option value="marketing">Marketing Plans</option>
+                        <option value="volunteers">Volunteers</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Entry Title</label>
+                    <input type="text" id="entry-title" required placeholder="e.g. VRIC Jummah Drive" class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-theme uppercase mb-1">Created By</label>
+                        <select id="entry-creator" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                            <option>Fuad</option><option>Aisha</option><option>Abdi</option>
+                            <option>Walid</option><option>Mahek</option><option>Muntaha</option>
+                            <option>AjiFanta</option><option>Aliyah</option><option>Raheeq</option>
+                            <option>Marwa</option><option>Hikmatullah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-theme uppercase mb-1">Event / Target Date</label>
+                        <input type="date" id="entry-date" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Location / Hub Address</label>
+                    <input type="text" id="entry-location" oninput="handleLocationTyping(this.value)" autocomplete="off" placeholder="Type LBJ Freeway, masjid name or address..." class="w-full bg-card border border-theme p-2.5 text-theme focus:border-maruf-gold focus:outline-none">
+                    <div id="location-suggestions" class="suggestions-dropdown hidden bg-surface border border-maruf-blue shadow-2xl text-xs divide-y divide-theme"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 bg-card p-3 border border-theme">
+                    <div>
+                        <label class="block text-[11px] font-bold text-maruf-gold uppercase mb-1">Collected Revenue ($)</label>
+                        <input type="number" id="entry-funds" placeholder="0.00" class="w-full bg-surface border border-theme p-2 text-theme">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-maruf-blue uppercase mb-1">Swift-Give Campaign Tag</label>
+                        <input type="text" id="entry-swift-tag" placeholder="e.g. VRIC-RAMADAN-2027" class="w-full bg-surface border border-theme p-2 text-theme">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Notes / Instructions</label>
+                    <textarea id="entry-notes" rows="2" placeholder="General entry guidelines or contacts..." class="w-full bg-card border border-theme p-2.5 text-theme"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-theme">
+                    <button type="button" onclick="closeModal('entry-modal')" class="px-4 py-2 text-muted bg-card border border-theme uppercase font-bold text-xs">Cancel</button>
+                    <button type="submit" class="px-5 py-2 uppercase font-bold text-xs bg-maruf-gold text-white border border-maruf-gold">Save Entry</button>
+                </div>
+            </form>
         </div>
-      </div>
-
-      <div class="glass-card p-5 rounded-2xl border border-slate-800">
-        <h3 class="text-xs font-bold text-slate-300 uppercase mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-chart-column text-amber-400"></i> Operational Progress Status
-        </h3>
-        <div class="h-48 relative flex justify-center">
-          <canvas id="statusChart"></canvas>
-        </div>
-      </div>
     </div>
 
-    <!-- Active Task Grid -->
-    <div class="space-y-4">
-      <h2 class="text-sm font-bold text-slate-300"><i class="fa-solid fa-list-check text-emerald-400"></i> Live Task Tracker</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="tasks-container"></div>
+    <!-- Modal: Edit Entry -->
+    <div id="edit-entry-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden p-4 modal-backdrop">
+        <div class="bg-surface border border-maruf-gold w-full max-w-lg p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-theme pb-3">
+                <h3 class="text-sm font-bold text-theme uppercase tracking-wider"><i class="fa-solid fa-pen-to-square text-maruf-gold mr-2"></i>Edit Activity Entry</h3>
+                <button onclick="closeModal('edit-entry-modal')" class="text-muted hover:text-theme"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+
+            <form onsubmit="handleEntryEditSubmit(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="edit-entry-id">
+                
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Entry Title</label>
+                    <input type="text" id="edit-entry-title" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-theme uppercase mb-1">Created By</label>
+                        <select id="edit-entry-creator" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                            <option>Fuad</option><option>Aisha</option><option>Abdi</option>
+                            <option>Walid</option><option>Mahek</option><option>Muntaha</option>
+                            <option>AjiFanta</option><option>Aliyah</option><option>Raheeq</option>
+                            <option>Marwa</option><option>Hikmatullah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-theme uppercase mb-1">Event / Target Date</label>
+                        <input type="date" id="edit-entry-date" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Location / Hub Address</label>
+                    <input type="text" id="edit-entry-location" class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 bg-card p-3 border border-theme">
+                    <div>
+                        <label class="block text-[11px] font-bold text-maruf-gold uppercase mb-1">Collected Revenue ($)</label>
+                        <input type="number" id="edit-entry-funds" class="w-full bg-surface border border-theme p-2 text-theme">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-maruf-blue uppercase mb-1">Swift-Give Campaign Tag</label>
+                        <input type="text" id="edit-entry-swift-tag" class="w-full bg-surface border border-theme p-2 text-theme">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Notes / Instructions</label>
+                    <textarea id="edit-entry-notes" rows="2" class="w-full bg-card border border-theme p-2.5 text-theme"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-theme">
+                    <button type="button" onclick="closeModal('edit-entry-modal')" class="px-4 py-2 text-muted bg-card border border-theme uppercase font-bold text-xs">Cancel</button>
+                    <button type="submit" class="px-5 py-2 uppercase font-bold text-xs bg-maruf-gold text-white border border-maruf-gold">Update Entry</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </main>
 
-  <!-- Create Task Modal -->
-  <div id="modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-    <div class="glass-card rounded-3xl max-w-lg w-full p-6 space-y-4 border border-slate-700">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-base text-white">Add Ramadan Process Task</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
+    <!-- Modal: Add Task -->
+    <div id="task-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden p-4 modal-backdrop">
+        <div class="bg-surface border border-maruf-blue w-full max-w-lg p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-theme pb-3">
+                <h3 class="text-sm font-bold text-theme uppercase tracking-wider"><i class="fa-solid fa-list-check text-maruf-blue mr-2"></i>Add Sub-Task & Deadline</h3>
+                <button onclick="closeModal('task-modal')" class="text-muted hover:text-theme"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
 
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-slate-400 mb-1">Process Phase</label>
-          <select id="inp-phase" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200">
-            <option value="Tabling & Outreach">Tabling & Outreach</option>
-            <option value="Collaborations & Partners">Collaborations & Partners</option>
-            <option value="Distributions & Inventory">Distributions & Inventory</option>
-            <option value="Dinners & Events">Dinners & Events</option>
-            <option value="Marketing & Communications">Marketing & Communications</option>
-            <option value="Volunteers">Volunteers</option>
-          </select>
+            <form onsubmit="handleTaskSubmit(event)" class="space-y-3 text-xs">
+                <input type="hidden" id="task-entry-id">
+                <input type="hidden" id="task-entry-title">
+                <input type="hidden" id="task-entry-section">
+
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Task Deliverable</label>
+                    <input type="text" id="task-name" required placeholder="e.g. Print banner and pack donation boxes" class="w-full bg-card border border-theme p-2.5 text-theme">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Assigned Staff</label>
+                    <select id="task-assignee" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                        <option>Fuad</option><option>Aisha</option><option>Abdi</option>
+                        <option>Walid</option><option>Mahek</option><option>Muntaha</option>
+                        <option>AjiFanta</option><option>Aliyah</option><option>Raheeq</option>
+                        <option>Marwa</option><option>Hikmatullah</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-theme uppercase mb-1">Deadline Date</label>
+                        <input type="date" id="task-due-date" required class="w-full bg-card border border-theme p-2.5 text-theme">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-theme uppercase mb-1">Deadline Time</label>
+                        <input type="time" id="task-due-time" class="w-full bg-card border border-theme p-2.5 text-theme">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-theme uppercase mb-1">Task Details / Instructions</label>
+                    <textarea id="task-details" rows="2" placeholder="Specific instructions for this staff member..." class="w-full bg-card border border-theme p-2.5 text-theme"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-3 border-t border-theme">
+                    <button type="button" onclick="closeModal('task-modal')" class="px-4 py-2 text-muted bg-card border border-theme uppercase font-bold text-xs">Cancel</button>
+                    <button type="submit" class="px-5 py-2 font-bold text-xs uppercase bg-maruf-blue text-white border border-maruf-blue">Add Task</button>
+                </div>
+            </form>
         </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-400 mb-1">Task Title</label>
-          <input type="text" id="inp-title" placeholder="e.g. Set up Goodie Bag Drive" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-400 mb-1">Details</label>
-          <textarea id="inp-desc" rows="3" placeholder="Task requirements..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200"></textarea>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1">Assigned Staff</label>
-            <select id="inp-assignee" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200">
-              <option value="Aliyah">Aliyah</option>
-              <option value="Muntaha">Muntaha</option>
-              <option value="Mahek">Mahek</option>
-              <option value="Fuad">Fuad</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1">Target Deadline</label>
-            <input type="date" id="inp-deadline" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200">
-          </div>
-        </div>
-      </div>
-
-      <button onclick="submitTask()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg">
-        Submit & Sync Live
-      </button>
     </div>
-  </div>
 
-  <script>
-    let tasksData = [];
-    let phaseChart = null;
-    let statusChart = null;
+    <script>
+        let currentSeason = 'ramadan';
+        let currentTab = 'dashboard';
+        let store = { ramadan: { entries: [], tasks: [], planning: [], shopping: [], metrics: {} }, dhulhijjah: { entries: [], tasks: [], planning: [], shopping: [], metrics: {} } };
+        let debounceTimer;
 
-    window.onload = function() {
-      initCharts();
-      fetchTasks();
-      // Auto-poll every 3 seconds so all staff see updates live
-      setInterval(fetchTasks, 3000);
-    };
+        const officialStaffList = ["Fuad", "Aisha", "Abdi", "Walid", "Mahek", "Muntaha", "AjiFanta", "Aliyah", "Raheeq", "Marwa", "Hikmatullah"];
 
-    function initCharts() {
-      const pCtx = document.getElementById('phaseChart').getContext('2d');
-      phaseChart = new Chart(pCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Tabling', 'Collab', 'Distributions', 'Dinners', 'Marketing', 'Volunteers'],
-          datasets: [{ data: [0,0,0,0,0,0], backgroundColor: ['#10b981', '#a855f7', '#3b82f6', '#f59e0b', '#f43f5e', '#06b6d4'] }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } } }
-      });
+        const dfwMasjids = [
+            "Ma'ruf Dallas Office - 9319 Lyndon B Johnson Fwy Suite 110, Dallas, TX 75243",
+            "Valley Ranch Islamic Center (VRIC), Irving, TX",
+            "Islamic Association of North Texas (IANT), Richardson, TX",
+            "Islamic Center of Irving (ICI), Irving, TX",
+            "Dallas Jamma Masjid, Dallas, TX",
+            "East Plano Islamic Center (EPIC), Plano, TX",
+            "Islamic Association of Collin County (IACC), Plano, TX",
+            "Frisco Masjid (ICF), Frisco, TX",
+            "Islamic Center of Arlington, Arlington, TX"
+        ];
 
-      const sCtx = document.getElementById('statusChart').getContext('2d');
-      statusChart = new Chart(sCtx, {
-        type: 'bar',
-        data: {
-          labels: ['Pending', 'In Progress', 'Completed'],
-          datasets: [{ label: 'Tasks', data: [0,0,0], backgroundColor: ['#64748b', '#f59e0b', '#10b981'] }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
-      });
-    }
+        document.addEventListener('DOMContentLoaded', fetchStore);
 
-    function fetchTasks() {
-      fetch('/api/tasks')
-        .then(r => r.json())
-        .then(d => {
-          if (d.status === 'SUCCESS') {
-            tasksData = d.tasks;
-            renderTasks();
-            updateCharts();
-          }
-        });
-    }
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btnLabel = document.getElementById('theme-label');
+            const btnIcon = document.getElementById('theme-icon');
 
-    function updateCharts() {
-      const phases = ['Tabling & Outreach', 'Collaborations & Partners', 'Distributions & Inventory', 'Dinners & Events', 'Marketing & Communications', 'Volunteers'];
-      const phaseCounts = phases.map(p => tasksData.filter(t => t.phase === p).length);
-      phaseChart.data.datasets[0].data = phaseCounts;
-      phaseChart.update();
+            if (html.classList.contains('theme-dark')) {
+                html.classList.remove('theme-dark');
+                html.classList.add('theme-light');
+                btnLabel.innerText = "Dark Theme";
+                btnIcon.className = "fa-solid fa-moon text-maruf-blue";
+            } else {
+                html.classList.remove('theme-light');
+                html.classList.add('theme-dark');
+                btnLabel.innerText = "Light Theme";
+                btnIcon.className = "fa-solid fa-sun text-maruf-gold";
+            }
+        }
 
-      const statuses = ['Pending', 'In Progress', 'Completed'];
-      const statusCounts
+        function fetchStore() {
+            fetch('/api/data')
+                .then(r => r.json())
+                .then(data => { store = data; renderUI(); })
+                .catch(err => console.error("Data load error:", err));
+        }
+
+        function switchCampaign(s) {
+            currentSeason = s;
+            document.getElementById('btn-ramadan').className = s === 'ramadan' ? 'flex items-center space-x-2 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wider bg-maruf-blue text-white' : 'flex items-center space-x-2 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wider text-muted hover:text-theme';
+            document.getElementById('btn-dhulhijjah').className = s === 'dhulhijjah' ? 'flex items-center space-x-2 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wider bg-maruf-gold text-white' : 'flex items-center space-x-2 px-3 py-1.5 rounded-none text-xs font-bold uppercase tracking-wider text-muted hover:text-theme';
+            renderUI();
+        }
+
+        function setActiveTab(t) {
+            currentTab = t;
+            document.querySelectorAll('.nav-tab').forEach(b => {
+                b.className = 'nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-none text-muted hover:text-theme whitespace-nowrap cursor-pointer';
+            });
+            const activeBtn = document.getElementById('tab-' + t);
+            if (activeBtn) {
+                activeBtn.className = 'nav-tab flex items-center space-x-2 px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-none text-maruf-gold bg-surface border-t-2 border-maruf-gold whitespace-nowrap cursor-pointer';
+            }
+            
+            if (t === 'tasks') {
+                document.getElementById('staff-filter-toolbar').classList.remove('hidden');
+            } else {
+                document.getElementById('staff-filter-toolbar').classList.add('hidden');
+            }
+            renderUI();
+        }
+
+        function emailStaff(staffName, taskSubject) {
+            const cleanName = staffName.split(' ')[0];
+            const email = `${cleanName.toLowerCase()}@marufdallas.org`;
+            const subject = encodeURIComponent(`[Ma'ruf Ops Hub] Action Item: ${taskSubject || 'Deliverable Notice'}`);
+            const body = encodeURIComponent(`Assalamu Alaikum ${cleanName},\n\nThis is a notification regarding your assigned deliverable in the Ma'ruf Dallas Ops Hub:\n\nDeliverable: ${taskSubject || 'General Assignment'}\n\nPlease update your task progress in the app.\n\nBarakAllahu Feekum,\nMa'ruf Dallas Operations Team`);
+            window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+        }
+
+        function renderUI() {
+            const container = document.getElementById('main-display');
+            if (!container) return;
+            const data = store[currentSeason] || { entries: [], tasks: [], planning: [], shopping: [], metrics: {} };
+
+            if (currentTab === 'dashboard') {
+                renderMainDashboard(container, data);
+            } else if (currentTab === 'planning') {
+                renderPreRamadanPlanningTab(container, data.planning, data.shopping);
+            } else if (currentTab === 'tasks') {
+                renderStaffTasksTab(container, data.tasks);
+            } else {
+                renderCoreSectionTab(container, data.entries, data.tasks, currentTab);
+            }
+        }
+
+        function renderMainDashboard(container, data) {
+            const m = data.metrics || { raised: 185000, goal: 250000, foodBoxes: 2100, mealsServed: 5400, volunteersCount: 96 };
+            const pct = Math.min(100, Math.round((m.raised / m.goal) * 100));
+            const completedTasks = data.tasks.filter(t => t.status === 'Completed').length;
+            const pendingTasks = data.tasks.filter(t => t.status !== 'Completed').length;
+
+            let recentEntriesHtml = '';
+            if (data.entries.length === 0) {
+                recentEntriesHtml = '<p class="text-xs text-muted italic p-4 text-center">No field entries logged yet. Click Create Entry to add your first activity.</p>';
+            } else {
+                recentEntriesHtml = data.entries.slice(-4).reverse().map(e => `
+                    <div class="bg-surface border border-theme rounded-none p-3.5 flex justify-between items-center">
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 bg-card text-theme border border-maruf-blue uppercase tracking-wider">${e.section}</span>
+                                <h4 class="font-bold text-theme text-xs uppercase tracking-wide">${e.title}</h4>
+                            </div>
+                            <p class="text-xs text-muted">Created by <span class="text-maruf-gold font-semibold">${e.creator}</span> • Date: ${e.date}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="openEditEntryModal('${e.id}')" class="text-xs bg-maruf-gold text-white font-bold uppercase tracking-wider px-2.5 py-1.5"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button onclick="setActiveTab('${e.section}')" class="text-xs bg-maruf-blue text-white font-bold uppercase tracking-wider px-3 py-1.5">View</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            let staffListHtml = officialStaffList.map(staff => {
+                const count = data.tasks.filter(t => t.assignee.toLowerCase().includes(staff.toLowerCase())).length;
+                return `
+                    <div class="flex justify-between items-center bg-card p-2.5 border border-theme text-xs">
+                        <span class="font-medium text-theme"><i class="fa-solid fa-user text-maruf-blue mr-2"></i>${staff}</span>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-0.5 font-bold ${count > 0 ? 'bg-maruf-gold text-white' : 'bg-surface text-muted'}">${count} Tasks</span>
+                            <button onclick="emailStaff('${staff}', 'Task Update')" class="text-[10px] font-bold uppercase bg-maruf-blue text-white px-2 py-0.5" title="Email ${staff}"><i class="fa-solid fa-envelope"></i> Email</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="flex justify-between items-center bg-surface p-4 border border-theme">
+                    <div>
+                        <h3 class="font-bold text-theme text-xs uppercase tracking-wider">Campaign Overview Counters</h3>
+                        <p class="text-xs text-muted">Real-time stats for funds, food boxes, and volunteers</p>
+                    </div>
+                    <button onclick="openMetricsModal()" class="bg-maruf-gold text-white font-bold text-xs uppercase px-4 py-2 border border-maruf-gold flex items-center space-x-2">
+                        <i class="fa-solid fa-sliders"></i><span>Edit Counters</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-surface border-t-2 border-maruf-gold p-5 shadow-md">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-bold text-maruf-gold uppercase tracking-wider">Total Funds Raised</p>
+                                <h3 class="text-2xl font-extrabold text-theme mt-1">$${Number(m.raised).toLocaleString()}</h3>
+                            </div>
+                            <div class="p-3 bg-card text-maruf-gold text-lg"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex justify-between text-[11px] text-muted mb-1">
+                                <span>Goal: $${Number(m.goal).toLocaleString()}</span>
+                                <span class="font-bold text-maruf-gold">${pct}%</span>
+                            </div>
+                            <div class="w-full bg-card h-2 border border-theme overflow-hidden">
+                                <div class="bg-maruf-gold h-full" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface border-t-2 border-maruf-blue p-5 shadow-md flex justify-between items-center">
+                        <div>
+                            <p class="text-xs font-bold text-theme uppercase tracking-wider">Food Packages / Boxes</p>
+                            <h3 class="text-2xl font-extrabold text-theme mt-1">${Number(m.foodBoxes).toLocaleString()} <span class="text-xs text-muted font-normal">Boxes</span></h3>
+                            <p class="text-xs text-maruf-blue mt-1"><i class="fa-solid fa-utensils mr-1"></i>${Number(m.mealsServed).toLocaleString()} Meals Served</p>
+                        </div>
+                        <div class="p-3 bg-card text-maruf-blue text-lg"><i class="fa-solid fa-box-open"></i></div>
+                    </div>
+
+                    <div class="bg-surface border-t-2 border-maruf-gold p-5 shadow-md flex justify-between items-center">
+                        <div>
+                            <p class="text-xs font-bold text-theme uppercase tracking-wider">Active Volunteers</p>
+                            <h3 class="text-2xl font-extrabold text-theme mt-1">${Number(m.volunteersCount)} <span class="text-xs text-muted font-normal">Mobilized</span></h3>
+                            <p class="text-xs text-maruf-gold mt-1"><i class="fa-solid fa-users mr-1"></i>Dallas Metro Area</p>
+                        </div>
+                        <div class="p-3 bg-card text-maruf-gold text-lg"><i class="fa-solid fa-user-group"></i></div>
+                    </div>
+
+                    <div class="bg-surface border-t-2 border-maruf-blue p-5 shadow-md flex justify-between items-center">
+                        <div>
+                            <p class="text-xs font-bold text-theme uppercase tracking-wider">Tasks Pipeline</p>
+                            <h3 class="text-2xl font-extrabold text-theme mt-1">${data.tasks.length} <span class="text-xs text-muted font-normal">Total</span></h3>
+                            <p class="text-xs text-maruf-blue mt-1"><i class="fa-solid fa-check-double mr-1"></i>${completedTasks} Done | ${pendingTasks} Pending</p>
+                        </div>
+                        <div class="p-3 bg-card text-maruf-blue text-lg"><i class="fa-solid fa-tasks"></i></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-surface border border-theme p-5 space-y-4">
+                        <div class="flex justify-between items-center border-b border-theme pb-3">
+                            <h3 class="font-bold text-theme text-xs uppercase tracking-wider"><i class="fa-solid fa-layer-group text-maruf-gold mr-2"></i>Active Operational Entries (${data.entries.length})</h3>
+                            <button onclick="openModal('entry-modal')" class="text-xs font-bold text-maruf-gold uppercase hover:underline"><i class="fa-solid fa-plus mr-1"></i>New Entry</button>
+                        </div>
+                        <div class="space-y-3">${recentEntriesHtml}</div>
+                    </div>
+
+                    <div class="bg-surface border border-theme p-5 space-y-4">
+                        <h3 class="font-bold text-theme text-xs uppercase tracking-wider border-b border-theme pb-3"><i class="fa-solid fa-users-gear text-maruf-blue mr-2"></i>Ma'ruf Staff Team (11)</h3>
+                        <div class="space-y-2">${staffListHtml}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openMetricsModal() {
+            const m = (store[currentSeason] && store[currentSeason].metrics) || { raised: 185000, goal: 250000, foodBoxes: 2100, mealsServed: 5400, volunteersCount: 96 };
+            document.getElementById('metric-raised').value = m.raised;
+            document.getElementById('metric-goal').value = m.goal;
+            document.getElementById('metric-food-boxes').value = m.foodBoxes;
+            document.getElementById('metric-meals-served').value = m.mealsServed;
+            document.getElementById('metric-volunteers').value = m.volunteersCount;
+            openModal('metrics-modal');
+        }
+
+        function handleMetricsSubmit(e) {
+            e.preventDefault();
+            const payload = {
+                season: currentSeason,
+                raised: document.getElementById('metric-raised').value,
+                goal: document.getElementById('metric-goal').value,
+                foodBoxes: document.getElementById('metric-food-boxes').value,
+                mealsServed: document.getElementById('metric-meals-served').value,
+                volunteersCount: document.getElementById('metric-volunteers').value
+            };
+
+            fetch('/api/metrics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(res => {
+                store = res.data;
+                closeModal('metrics-modal');
+                renderUI();
+            });
+        }
+
+        function renderPreRamadanPlanningTab(container, planningList, shoppingList) {
+            let planningRows = (planningList || []).map(p => `
+                <tr class="border-b border-theme text-xs hover:bg-card">
+                    <td class="p-3 font-bold text-theme">${p.task}</td>
+                    <td class="p-3 text-maruf-blue font-semibold">${p.lead}</td>
+                    <td class="p-3 text-maruf-gold">${p.target}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 text-[10px] font-bold uppercase ${p.status === 'Completed' ? 'bg-emerald-800 text-white' : p.status === 'In Progress' ? 'bg-maruf-gold text-white' : 'bg-card text-muted border border-theme'}">${p.status}</span>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="emailStaff('${p.lead.split('/')[0].trim()}', '${p.task.replace(/'/g, "\\'")}')" class="bg-maruf-blue text-white font-bold text-[10px] uppercase px-2.5 py-1"><i class="fa-solid fa-paper-plane mr-1"></i>Email Lead</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            let shoppingRows = (shoppingList || []).map(s => `
+                <div class="bg-card p-3 border border-theme flex justify-between items-center text-xs">
+                    <div>
+                        <p class="font-bold text-theme">${s.item}</p>
+                        <p class="text-[11px] text-muted">Quantity Target: <span class="text-maruf-gold">${s.qty}</span></p>
+                    </div>
+                    <span class="px-2 py-0.5 text-[10px] font-bold uppercase ${s.status === 'In Stock' ? 'bg-emerald-800 text-white' : s.status === 'Ordered' ? 'bg-maruf-blue text-white' : 'bg-maruf-gold text-white'}">${s.status}</span>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-surface border border-theme p-5 space-y-4">
+                        <div class="border-b border-theme pb-3">
+                            <h3 class="font-bold text-theme text-sm uppercase tracking-wider"><i class="fa-solid fa-list-check text-maruf-gold mr-2"></i>2027 Pre-Ramadan Master Checklist</h3>
+                            <p class="text-xs text-muted mt-0.5">Core launch deliverables, assigned project leads, and target completion dates</p>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-card text-xs text-maruf-gold uppercase border-b border-theme">
+                                        <th class="p-3">Deliverable Item</th>
+                                        <th class="p-3">Lead</th>
+                                        <th class="p-3">Target Date</th>
+                                        <th class="p-3">Status</th>
+                                        <th class="p-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${planningRows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface border border-theme p-5 space-y-4">
+                        <div class="border-b border-theme pb-3">
+                            <h3 class="font-bold text-theme text-sm uppercase tracking-wider"><i class="fa-solid fa-boxes-packing text-maruf-blue mr-2"></i>Shopping & Assets Supply List</h3>
+                            <p class="text-xs text-muted mt-0.5">Inventory checklist for drive-thru and distribution logistics</p>
+                        </div>
+                        <div class="space-y-2.5">${shoppingRows}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStaffTasksTab(container, tasks) {
+            const selectedStaff = document.getElementById('staff-select-filter').value;
+            const filteredTasks = tasks.filter(t => selectedStaff === 'ALL' || t.assignee.toLowerCase().includes(selectedStaff.toLowerCase()));
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `<div class="bg-surface p-8 text-center text-muted border border-theme">No sub-tasks assigned for ${selectedStaff}.</div>`;
+                return;
+            }
+
+            container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">` + filteredTasks.map(t => `
+                <div class="bg-surface border border-theme p-4 space-y-3 shadow-md">
+                    <div class="flex justify-between items-start border-b border-theme pb-2">
+                        <span class="text-[10px] font-bold text-maruf-gold uppercase tracking-wider">${t.section}</span>
+                        <select onchange="updateTaskStatus('${t.id}', this.value)" class="text-xs bg-card border border-maruf-blue px-2 py-1 ${t.status === 'Completed' ? 'text-maruf-blue font-bold' : 'text-maruf-gold'}">
+                            <option value="Pending" ${t.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                            <option value="In Progress" ${t.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Completed" ${t.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-theme text-sm uppercase tracking-wide">${t.task_name}</h4>
+                        <p class="text-xs text-muted mt-1"><strong>Entry:</strong> ${t.entry_title}</p>
+                    </div>
+                    <div class="bg-card p-2.5 text-xs text-muted border border-theme">
+                        ${t.details || 'No specific instructions.'}
+                    </div>
+                    <div class="flex justify-between items-center text-xs border-t border-theme pt-2 text-muted">
+                        <span class="flex items-center"><i class="fa-solid fa-user-check text-maruf-blue mr-1"></i>${t.assignee}</span>
+                        <button onclick="emailStaff('${t.assignee}', '${t.task_name.replace(/'/g, "\\'")}')" class="text-[10px] font-bold uppercase bg-maruf-blue text-white px-2 py-0.5"><i class="fa-solid fa-envelope mr-1"></i>Email Staff</button>
+                    </div>
+                </div>
+            `).join('') + `</div>`;
+        }
+
+        function renderCoreSectionTab(container, entries, tasks, section) {
+            const sectionEntries = entries.filter(e => e.section === section);
+
+            if (sectionEntries.length === 0) {
+                container.innerHTML = `<div class="bg-surface p-8 text-center text-muted border border-theme">No entries created in this section yet. Click <strong>Create Entry</strong> above to add one.</div>`;
+                return;
+            }
+
+            container.innerHTML = `<div class="space-y-4">` + sectionEntries.map(e => {
+                const entryTasks = tasks.filter(t => t.entry_id === e.id);
+                const googleMapsUrl = e.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}` : '#';
+
+                let tasksHtml = '';
+                if (entryTasks.length === 0) {
+                    tasksHtml = '<p class="text-xs text-muted italic p-2">No tasks assigned to this entry yet.</p>';
+                } else {
+                    tasksHtml = entryTasks.map(t => `
+                        <div class="bg-card p-3 flex justify-between items-center text-xs border border-theme">
+                            <div class="space-y-1">
+                                <p class="font-bold text-theme uppercase tracking-wide">${t.task_name}</p>
+                                <p class="text-muted">Assigned: <span class="text-maruf-blue font-semibold">${t.assignee}</span></p>
+                                <p class="text-maruf-gold text-[11px]"><i class="fa-solid fa-clock mr-1"></i>Deadline: ${t.due_date} ${t.due_time ? '@ ' + t.due_time : ''}</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="emailStaff('${t.assignee}', '${t.task_name.replace(/'/g, "\\'")}')" class="bg-maruf-blue text-white text-[10px] font-bold uppercase px-2 py-1"><i class="fa-solid fa-paper-plane"></i></button>
+                                <select onchange="updateTaskStatus('${t.id}', this.value)" class="text-xs bg-surface border border-maruf-blue px-2 py-1 ${t.status === 'Completed' ? 'text-maruf-blue font-bold' : 'text-maruf-gold'}">
+                                    <option value="Pending" ${t.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="In Progress" ${t.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                    <option value="Completed" ${t.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                return `
+                    <div class="bg-surface border border-theme p-5 space-y-4 shadow-md">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-theme pb-3 gap-2">
+                            <div>
+                                <span class="text-xs font-bold text-maruf-gold uppercase tracking-wider">${e.section}</span>
+                                <h3 class="text-lg font-bold text-theme uppercase tracking-wide">${e.title}</h3>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="openEditEntryModal('${e.id}')" class="bg-maruf-gold text-white text-xs font-bold uppercase px-3 py-2"><i class="fa-solid fa-pen mr-1"></i>Edit Entry</button>
+                                <button onclick="openAddTaskModal('${e.id}', '${e.title.replace(/'/g, "\\'")}', '${e.section}')" class="bg-maruf-blue text-xs font-bold uppercase text-white px-3.5 py-2 flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-plus-circle"></i><span>Add Task</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs text-muted bg-card p-3 border border-theme">
+                            <div><strong class="text-maruf-gold uppercase tracking-wider block">Created By:</strong> ${e.creator}</div>
+                            <div><strong class="text-maruf-gold uppercase tracking-wider block">Target Date:</strong> ${e.date}</div>
+                            <div>
+                                <strong class="text-maruf-gold uppercase tracking-wider block">Masjid / Hub:</strong>
+                                ${e.location ? `<a href="${googleMapsUrl}" target="_blank" class="text-theme hover:underline font-medium inline-flex items-center mt-0.5"><i class="fa-solid fa-location-dot mr-1.5 text-maruf-blue"></i>${e.location}</a>` : '<span class="text-muted">Not specified</span>'}
+                            </div>
+                            <div>
+                                <strong class="text-maruf-gold uppercase tracking-wider block">Masjid Revenue Tracking:</strong>
+                                <span class="text-theme font-bold">${e.funds ? '$' + Number(e.funds).toLocaleString() : '$0'}</span>
+                                ${e.swift_tag ? `<p class="text-[10px] text-maruf-blue mt-0.5"><i class="fa-solid fa-bolt mr-1"></i>Tag: ${e.swift_tag}</p>` : ''}
+                            </div>
+                        </div>
+
+                        ${e.notes ? `<p class="text-xs text-muted bg-card p-2.5 border border-theme"><strong>Notes:</strong> ${e.notes}</p>` : ''}
+
+                        <div class="border-t border-theme pt-3 space-y-2">
+                            <h4 class="text-xs font-bold text-theme uppercase tracking-wider">Assigned Sub-Tasks (${entryTasks.length})</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">${tasksHtml}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('') + `</div>`;
+        }
+
+        function openEditEntryModal(id) {
+            const entries = store[currentSeason].entries;
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+
+            document.getElementById('edit-entry-id').value = entry.id;
+            document.getElementById('edit-entry-title').value = entry.title;
+            document.getElementById('edit-entry-creator').value = entry.creator;
+            document.getElementById('edit-entry-date').value = entry.date;
+            document.getElementById('edit-entry-location').value = entry.location || '';
+            document.getElementById('edit-entry-funds').value = entry.funds || 0;
+            document.getElementById('edit-entry-swift-tag').value = entry.swift_tag || '';
+            document.getElementById('edit-entry-notes').value = entry.notes || '';
+
+            openModal('edit-entry-modal');
+        }
+
+        function handleEntryEditSubmit(e) {
+            e.preventDefault();
+            const payload = {
+                season: currentSeason,
+                id: document.getElementById('edit-entry-id').value,
+                title: document.getElementById('edit-entry-title').value,
+                creator: document.getElementById('edit-entry-creator').value,
+                date: document.getElementById('edit-entry-date').value,
+                location: document.getElementById('edit-entry-location').value,
+                funds: document.getElementById('edit-entry-funds').value || 0,
+                swift_tag: document.getElementById('edit-entry-swift-tag').value || '',
+                notes: document.getElementById('edit-entry-notes').value
+            };
+
+            fetch('/api/entries/edit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(res => {
+                store = res.data;
+                closeModal('edit-entry-modal');
+                renderUI();
+            });
+        }
+
+        function handleLocationTyping(query) {
+            clearTimeout(debounceTimer);
+            const box = document.getElementById('location-suggestions');
+            if (!query || query.trim().length < 2) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            const q = query.toLowerCase();
+            const localMatches = dfwMasjids.filter(m => m.toLowerCase().includes(q));
+
+            debounceTimer = setTimeout(() => {
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + " Texas")}&limit=5`;
+                
+                fetch(url)
+                    .then(r => r.json())
+                    .then(apiResults => {
+                        let combined = [...localMatches.map(m => ({ title: m, subtitle: "Preset Hub / Venue" }))];
+                        if (apiResults && apiResults.length > 0) {
+                            apiResults.forEach(item => {
+                                const clean = item.display_name;
+                                if (!combined.some(c => c.title === clean)) combined.push({ title: clean, subtitle: "Address match" });
+                            });
+                        }
+                        if (combined.length === 0) { box.classList.add('hidden'); return; }
+
+                        box.innerHTML = combined.slice(0, 6).map(res => `
+                            <div onclick="selectLocation('${res.title.replace(/'/g, "\\'")}')" class="p-3 hover:bg-maruf-blue hover:text-white cursor-pointer text-theme border-b border-theme transition">
+                                <div class="font-semibold text-xs flex items-center uppercase tracking-wide"><i class="fa-solid fa-location-dot text-maruf-gold mr-2"></i>${res.title}</div>
+                                <div class="text-[10px] text-muted pl-5 mt-0.5">${res.subtitle}</div>
+                            </div>
+                        `).join('');
+                        box.classList.remove('hidden');
+                    })
+                    .catch(() => {
+                        if (localMatches.length > 0) {
+                            box.innerHTML = localMatches.map(m => `<div onclick="selectLocation('${m.replace(/'/g, "\\'")}')" class="p-3 hover:bg-maruf-blue hover:text-white cursor-pointer text-theme transition"><div class="font-semibold text-xs flex items-center uppercase tracking-wide"><i class="fa-solid fa-location-dot text-maruf-gold mr-2"></i>${m}</div></div>`).join('');
+                            box.classList.remove('hidden');
+                        } else { box.classList.add('hidden'); }
+                    });
+            }, 150);
+        }
+
+        function selectLocation(val) {
+            document.getElementById('entry-location').value = val;
+            document.getElementById('location-suggestions').classList.add('hidden');
+        }
+
+        function handleEntrySubmit(e) {
+            e.preventDefault();
+            const payload = {
+                season: currentSeason,
+                section: document.getElementById('entry-section').value,
+                title: document.getElementById('entry-title').value,
+                creator: document.getElementById('entry-creator').value,
+                date: document.getElementById('entry-date').value,
+                location: document.getElementById('entry-location').value,
+                funds: document.getElementById('entry-funds').value || 0,
+                swift_tag: document.getElementById('entry-swift-tag').value || '',
+                notes: document.getElementById('entry-notes').value
+            };
+
+            fetch('/api/entries', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(res => {
+                store = res.data;
+                closeModal('entry-modal');
+                renderUI();
+            });
+        }
+
+        function openAddTaskModal(entryId, title, section) {
+            document.getElementById('task-entry-id').value = entryId;
+            document.getElementById('task-entry-title').value = title;
+            document.getElementById('task-entry-section').value = section;
+            openModal('task-modal');
+        }
+
+        function handleTaskSubmit(e) {
+            e.preventDefault();
+            const payload = {
+                season: currentSeason,
+                entry_id: document.getElementById('task-entry-id').value,
+                entry_title: document.getElementById('task-entry-title').value,
+                section: document.getElementById('task-entry-section').value,
+                task_name: document.getElementById('task-name').value,
+                assignee: document.getElementById('task-assignee').value,
+                due_date: document.getElementById('task-due-date').value,
+                due_time: document.getElementById('task-due-time').value,
+                details: document.getElementById('task-details').value
+            };
+
+            fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(res => {
+                store = res.data;
+                closeModal('task-modal');
+                renderUI();
+            });
+        }
+
+        function updateTaskStatus(taskId, status) {
+            fetch('/api/tasks/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ season: currentSeason, task_id: taskId, status: status })
+            }).then(r => r.json()).then(res => {
+                store = res.data;
+                renderUI();
+            });
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>

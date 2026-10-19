@@ -1,0 +1,67 @@
+{
+  "ramadan": {
+    "entries": [
+      {
+        "id": "E-fcce58",
+        "section": "tabling",
+        "title": "TEst",
+        "creator": "Aliyah",
+        "lead": null,
+        "date": "2003-12-31",
+        "location": "9319 lyndon B Johnson FWy",
+        "status": "In Progress",
+        "notes": "I was born"
+      },
+      {
+        "id": "E-3885a7",
+        "section": "tabling",
+        "title": "TEST2",
+        "creator": "Aliyah",
+        "lead": null,
+        "date": "2003-12-30",
+        "location": "Ma'ruf Dallas",
+        "status": "In Progress",
+        "notes": "No"
+      },
+      {
+        "id": "E-aab1c0",
+        "section": "tabling",
+        "title": "Tabling ",
+        "creator": "Aliyah",
+        "lead": null,
+        "date": "2026-12-01",
+        "location": "Islamic Society of Denton, Denton, Denton County, Texas, United States",
+        "status": "In Progress",
+        "notes": "Get there earlyy"
+      },
+      {
+        "id": "E-4c8399",
+        "section": "tabling",
+        "title": "virc",
+        "creator": "Aliyah",
+        "lead": null,
+        "date": "11111-11-11",
+        "location": "Valley Ranch Islamic Center (VRIC), Irving, TX",
+        "status": "In Progress",
+        "notes": "gmthtm"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "T-fbc7e7",
+        "entry_id": "E-fcce58",
+        "entry_title": "TEst",
+        "section": "tabling",
+        "task_name": "Get STuff",
+        "assignee": "Aliyah",
+        "due_date": "2026-10-28",
+        "status": "Pending",
+        "details": "GET ITTT"
+      }
+    ]
+  },
+  "dhulhijjah": {
+    "entries": [],
+    "tasks": []
+  }
+}
