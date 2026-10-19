@@ -951,6 +951,38 @@
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-    </script>
+    // Function to send note to Flask backend and dispatch email
+async function publishNote(staffName, taskTitle, taskId) {
+  const noteInput = document.getElementById(`note-input-${taskId}`);
+  const noteText = noteInput ? noteInput.value.trim() : '';
+
+  if (!noteText) {
+    alert("Please enter a note before publishing.");
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/add-note', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        staffName: staffName,
+        taskTitle: taskTitle,
+        note: noteText
+      })
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      alert(`Note published! An email has been sent to ${staffName}.`);
+      noteInput.value = ''; // clear input box
+    } else {
+      alert(`Notice: ${result.message}`);
+    }
+  } catch (error) {
+    console.error("Failed to publish note:", error);
+    alert("Server error when attempting to publish note.");
+  }
+}</script>
 </body>
 </html>

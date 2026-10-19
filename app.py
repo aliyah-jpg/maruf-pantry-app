@@ -263,4 +263,61 @@ def update_task_status():
     return jsonify({'success': True, 'data': data})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)# ==========================================
+# Task Notes & Automated Email Dispatch
+# ==========================================
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+# Replace these with your operational Gmail/Google Workspace credentials
+SENDER_EMAIL = "your-pantry-email@gmail.com"  
+SENDER_PASSWORD = "your-app-password"          
+
+def send_email_notification(to_email, staff_name, task_title, note_text):
+    try:
+        subject = f"[Ma'ruf Ops Hub] New Note on Task: {task_title}"
+        body = f"""Assalamu Alaikum {staff_name},
+
+A new note was added to your task "{task_title}" on the Ma'ruf Dallas Ops Hub:
+
+--------------------------------------------------
+"{note_text}"
+--------------------------------------------------
+
+Please log in to the dashboard to view or update your task status.
+
+BarakAllahu Feekum,
+Ma'ruf Dallas Operations Team
+"""
+        msg = MIMEMultipart()
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.send_message(msg)
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
+
+@app.route('/api/add-note', methods=['POST'])
+def add_note():
+    data = request.json
+    staff_name = data.get('staffName', 'Team Member')
+    task_title = data.get('taskTitle', 'Assigned Task')
+    note_text = data.get('note', '')
+    
+    clean_name = staff_name.split()[0].lower()
+    recipient_email = f"{clean_name}@marufdallas.org"
+
+    email_sent = send_email_notification(recipient_email, staff_name, task_title, note_text)
+    
+    if email_sent:
+        return jsonify({"status": "success", "message": "Note published and emailed!"})
+    else:
+        return jsonify({"status": "partial_success", "message": "Note saved, but email dispatch failed. Check SMTP credentials."}), 500
